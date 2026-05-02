@@ -454,6 +454,10 @@ export default function Home() {
           </div>
         </section>
       </main>
+
+      <footer className="flex-none py-6 text-center text-[13px] text-[var(--storm-cloud)]">
+        made by farza &lt;3
+      </footer>
     </div>
   );
 }
