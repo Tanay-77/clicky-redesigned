@@ -5,16 +5,19 @@ import {
   CheckCircle2,
   Code2,
   Film,
+  Moon,
   Palette,
   Play,
   Search,
   Scissors,
   Send,
+  Sun,
 } from 'lucide-react';
 import { motion, useInView, useScroll, useTransform } from 'motion/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 
 const editSteps = ['Moving to 10s', 'Selecting clip', 'Cutting clip'];
 const timeMarks = ['0s', '5s', '10s', '15s', '20s'];
@@ -64,6 +67,7 @@ export default function Home() {
   const promptsRef = useRef<HTMLElement>(null);
   const [cursor, setCursor] = useState({ x: 0, y: 0, visible: false });
   const [promptTick, setPromptTick] = useState(0);
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const promptsInView = useInView(promptsRef, { amount: 0.35, once: true });
   const { scrollYProgress } = useScroll({
     target: mockupRef,
@@ -72,6 +76,10 @@ export default function Home() {
   const mockupRotateX = useTransform(scrollYProgress, [0, 1], [45, 0]);
   const mockupY = useTransform(scrollYProgress, [0, 1], [80, 0]);
   const mockupScale = useTransform(scrollYProgress, [0, 1], [0.94, 1]);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
 
   useEffect(() => {
     const handlePointerMove = (event: PointerEvent) => {
@@ -107,6 +115,35 @@ export default function Home() {
   const activePromptPhase = promptTick % promptStatuses.length;
   const activePromptRow = Math.floor(activePromptIndex / 2);
   const activePromptColumn = activePromptIndex % 2;
+  const handleThemeToggle = (event: React.MouseEvent<HTMLButtonElement>) => {
+    const nextTheme = theme === 'light' ? 'dark' : 'light';
+    const buttonBounds = event.currentTarget.getBoundingClientRect();
+    const x = buttonBounds.left + buttonBounds.width / 2;
+    const y = buttonBounds.top + buttonBounds.height / 2;
+    const documentWithViewTransition = document as Document & {
+      startViewTransition?: (callback: () => void) => { finished: Promise<void> };
+    };
+
+    document.documentElement.style.setProperty('--theme-x', `${x}px`);
+    document.documentElement.style.setProperty('--theme-y', `${y}px`);
+    document.documentElement.classList.add('theme-transitioning');
+
+    if (!documentWithViewTransition.startViewTransition) {
+      setTheme(nextTheme);
+      window.setTimeout(() => {
+        document.documentElement.classList.remove('theme-transitioning');
+      }, 650);
+      return;
+    }
+
+    const transition = documentWithViewTransition.startViewTransition(() => {
+      flushSync(() => setTheme(nextTheme));
+    });
+
+    transition.finished.finally(() => {
+      document.documentElement.classList.remove('theme-transitioning');
+    });
+  };
 
   return (
     <div className="min-h-screen bg-[var(--pitch-black)] selection:bg-[var(--aether-blue)] selection:text-white flex flex-col">
@@ -134,7 +171,15 @@ export default function Home() {
           
         </div>
         <div className="flex items-center gap-4">
-          <Link href={demoUrl} target="_blank" rel="noreferrer" className="bg-[var(--aether-blue)] text-[var(--porcelain)] h-8 px-4 rounded-[6px] text-[13px] font-medium hover:bg-[#4630d8] transition-colors shadow-[0_0_10px_rgba(83,58,253,0.18)] hover:shadow-[0_0_15px_rgba(83,58,253,0.32)] flex items-center gap-1.5">
+          <button
+            type="button"
+            aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
+            onClick={handleThemeToggle}
+            className="flex h-8 w-8 items-center justify-center rounded-[6px] border border-[var(--charcoal-grey)] bg-[var(--graphite)] text-[var(--porcelain)] transition-colors hover:border-[var(--storm-cloud)]/50 hover:bg-[var(--deep-slate)] cursor-pointer"
+          >
+            {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+          </button>
+          <Link href={demoUrl} target="_blank" rel="noreferrer" className="bg-[var(--aether-blue)] text-[var(--accent-foreground)] h-8 px-4 rounded-[6px] text-[13px] font-medium hover:bg-[#4630d8] transition-colors shadow-[0_0_10px_rgba(83,58,253,0.18)] hover:shadow-[0_0_15px_rgba(83,58,253,0.32)] flex items-center gap-1.5">
             Watch Demo <ArrowUpRight className="w-3.5 h-3.5 opacity-80" />
           </Link>
         </div>
@@ -158,7 +203,7 @@ export default function Home() {
                 className="bg-[var(--graphite)] border border-[var(--charcoal-grey)] rounded-[8px] h-[46px] px-4 text-[15px] w-full sm:w-[280px] text-[var(--porcelain)] placeholder:text-[var(--storm-cloud)] focus:outline-none focus:border-[var(--aether-blue)] focus:ring-1 focus:ring-[var(--aether-blue)]/30 transition-all shadow-sm"
               />
             </div>
-            <button className="bg-[var(--aether-blue)] text-[var(--porcelain)] h-[46px] px-7 rounded-[8px] text-[15px] font-semibold hover:bg-[#4630d8] transition-all shadow-[0_0_12px_rgba(83,58,253,0.2)] hover:shadow-[0_0_20px_rgba(83,58,253,0.35)] w-full sm:w-auto whitespace-nowrap cursor-pointer">
+            <button className="bg-[var(--aether-blue)] text-[var(--accent-foreground)] h-[46px] px-7 rounded-[8px] text-[15px] font-semibold hover:bg-[#4630d8] transition-all shadow-[0_0_12px_rgba(83,58,253,0.2)] hover:shadow-[0_0_20px_rgba(83,58,253,0.35)] w-full sm:w-auto whitespace-nowrap cursor-pointer">
               Download
             </button>
             <a href='https://tally.so/r/kdWMjM' className="w-full sm:w-auto sm:ml-1"><button className="h-[46px] px-5 border border-[var(--charcoal-grey)] rounded-[8px] text-[15px] font-medium text-[var(--porcelain)] hover:bg-[var(--graphite)] hover:border-[var(--storm-cloud)]/40 transition-all flex items-center justify-center gap-2 whitespace-nowrap w-full cursor-pointer">
@@ -181,13 +226,13 @@ export default function Home() {
               transformOrigin: 'center top',
               transformStyle: 'preserve-3d',
             }}
-            className="relative overflow-hidden rounded-[6px] border border-[var(--charcoal-grey)] bg-[#0b0c0e] shadow-2xl"
+            className="relative overflow-hidden rounded-[6px] border border-[var(--charcoal-grey)] bg-[var(--chrome-muted)] shadow-[var(--shadow-strong)]"
           >
-            <div className="flex h-12 items-center border-b border-[var(--charcoal-grey)] bg-[#121315] px-4">
+            <div className="flex h-12 items-center border-b border-[var(--charcoal-grey)] bg-[var(--chrome)] px-4">
               <div className="flex gap-2">
-                <div className="h-3 w-3 rounded-full bg-[#2a2c33]" />
-                <div className="h-3 w-3 rounded-full bg-[#2a2c33]" />
-                <div className="h-3 w-3 rounded-full bg-[#2a2c33]" />
+                <div className="h-3 w-3 rounded-full bg-[var(--panel-deep)]" />
+                <div className="h-3 w-3 rounded-full bg-[var(--panel-deep)]" />
+                <div className="h-3 w-3 rounded-full bg-[var(--panel-deep)]" />
               </div>
               <div className="absolute left-1/2 -translate-x-1/2 text-[12px] font-medium text-[var(--storm-cloud)]">
                 <span className="flex items-center gap-2">
@@ -209,7 +254,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="overflow-hidden rounded-[6px] border border-[var(--charcoal-grey)] bg-[#101113]">
+                <div className="overflow-hidden rounded-[6px] border border-[var(--charcoal-grey)] bg-[var(--panel)]">
                   <div className="flex h-10 items-center justify-between border-b border-[var(--charcoal-grey)] px-3">
                     <div className="flex items-center gap-2 text-[12px] text-[var(--porcelain)]">
                       <Film className="h-4 w-4 text-[var(--aether-blue)]" />
@@ -222,12 +267,10 @@ export default function Home() {
                   </div>
 
                   <div className="grid gap-4 p-4 lg:grid-cols-[1fr_190px]">
-                    <div className="relative aspect-video overflow-hidden rounded-[6px] border border-[var(--charcoal-grey)] bg-[#08090a]">
-                      <div className="absolute inset-0 bg-[linear-gradient(135deg,#15171d_0%,#222638_42%,#0f1011_43%,#08090a_100%)]" />
-                      <div className="absolute left-[11%] top-[16%] h-[52%] w-[38%] rounded-[5px] bg-[#2f3449]" />
-                      <div className="absolute bottom-[17%] left-[19%] h-[7%] w-[48%] rounded-full bg-[#533afd]/80 blur-[18px]" />
-                      <div className="absolute right-[12%] top-[18%] h-[60%] w-[20%] rounded-t-full bg-[#2a2d37]" />
-                      <div className="absolute inset-x-0 bottom-0 flex h-9 items-center justify-between bg-black/45 px-3 text-[11px] text-[var(--storm-cloud)]">
+                    <div className="relative aspect-video overflow-hidden rounded-[6px] border border-[var(--charcoal-grey)] bg-[var(--preview)]">
+                      <div className="absolute left-[11%] top-[16%] h-[52%] w-[38%] rounded-[5px] bg-[var(--media-block)]" />
+                      <div className="absolute right-[12%] top-[18%] h-[60%] w-[20%] rounded-t-full bg-[var(--media-pill)]" />
+                      <div className="absolute inset-x-0 bottom-0 flex h-9 items-center justify-between bg-[var(--overlay)] px-3 text-[11px] text-[var(--storm-cloud)]">
                         <span>Preview</span>
                         <span className="text-[var(--porcelain)]">00:00:10:00</span>
                       </div>
@@ -236,7 +279,7 @@ export default function Home() {
                       </button>
                     </div>
 
-                    <div className="rounded-[6px] border border-[var(--charcoal-grey)] bg-[#0c0d0e] p-3">
+                    <div className="rounded-[6px] border border-[var(--charcoal-grey)] bg-[var(--panel-deep)] p-3">
                       <div className="flex items-center gap-2 text-[11px] font-medium text-[var(--porcelain)]">
                         <Image src="/logo.png" alt="" width={14} height={14} className="rounded-[3px]" />
                         Action Flow
@@ -245,7 +288,7 @@ export default function Home() {
                         {editSteps.map((step, index) => (
                           <motion.div
                             key={step}
-                            className="flex items-center gap-2 rounded-[4px] border border-[var(--charcoal-grey)] bg-[#111216] px-2 py-2 text-[11px] text-[var(--porcelain)]"
+                            className="flex items-center gap-2 rounded-[4px] border border-[var(--charcoal-grey)] bg-[var(--panel-muted)] px-2 py-2 text-[11px] text-[var(--porcelain)]"
                             animate={{
                               borderColor: [
                                 'rgba(35,37,42,1)',
@@ -263,7 +306,7 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="border-t border-[var(--charcoal-grey)] bg-[#0b0c0e] p-4">
+                  <div className="border-t border-[var(--charcoal-grey)] bg-[var(--chrome-muted)] p-4">
                     <div className="mb-2 grid grid-cols-5 text-[10px] text-[var(--storm-cloud)]">
                       {timeMarks.map((mark) => (
                         <div key={mark} className="relative">
@@ -272,7 +315,7 @@ export default function Home() {
                       ))}
                     </div>
 
-                    <div className="relative h-[148px] rounded-[6px] border border-[var(--charcoal-grey)] bg-[#08090a] p-4">
+                    <div className="relative h-[148px] rounded-[6px] border border-[var(--charcoal-grey)] bg-[var(--preview)] p-4">
                       <div className="absolute left-4 right-4 top-8 h-px bg-[var(--charcoal-grey)]" />
                       <div className="absolute left-4 right-4 top-24 h-px bg-[var(--charcoal-grey)]" />
 
@@ -287,7 +330,7 @@ export default function Home() {
                         transition={{ duration: 1.4, repeat: Infinity }}
                       />
 
-                      <div className="absolute left-[8%] top-12 h-[46px] w-[41.5%] overflow-hidden rounded-l-[5px] border border-[var(--aether-blue)]/65 bg-[#2d2f3b]">
+                      <div className="absolute left-[8%] top-12 h-[46px] w-[41.5%] overflow-hidden rounded-l-[5px] border border-[var(--aether-blue)]/65 bg-[var(--timeline-clip-a)]">
                         <div className="flex h-full items-center gap-2 px-3 text-[11px] text-[var(--porcelain)]">
                           <Film className="h-3.5 w-3.5 text-[var(--aether-blue)]" />
                           clip_A_001.mov
@@ -295,7 +338,7 @@ export default function Home() {
                         <div className="absolute inset-x-2 bottom-2 h-1 rounded-full bg-white/15" />
                       </div>
 
-                      <div className="absolute left-[51%] top-12 h-[46px] w-[41%] overflow-hidden rounded-r-[5px] border border-[var(--aether-blue)]/65 bg-[#252836]">
+                      <div className="absolute left-[51%] top-12 h-[46px] w-[41%] overflow-hidden rounded-r-[5px] border border-[var(--aether-blue)]/65 bg-[var(--timeline-clip-b)]">
                         <div className="flex h-full items-center gap-2 px-3 text-[11px] text-[var(--porcelain)]">
                           <Film className="h-3.5 w-3.5 text-[var(--aether-blue)]" />
                           clip_A_001.mov
@@ -331,7 +374,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <aside className="rounded-[6px] border border-[var(--charcoal-grey)] bg-[#101113] p-4">
+              <aside className="rounded-[6px] border border-[var(--charcoal-grey)] bg-[var(--panel)] p-4">
                 <div className="text-[10px] uppercase tracking-wider text-[var(--storm-cloud)]">Current Mission</div>
                 <div className="mt-2 text-[15px] font-medium leading-snug text-[var(--porcelain)]">
                   Cut the selected video clip exactly at 10 seconds.
@@ -401,7 +444,7 @@ export default function Home() {
                     className={`relative min-h-[118px] overflow-hidden rounded-[8px] border px-5 py-5 transition-colors ${
                       isActive
                         ? 'border-[var(--aether-blue)]/70 bg-[var(--aether-blue)]/10'
-                        : 'border-[var(--charcoal-grey)] bg-[#111216] hover:border-[var(--storm-cloud)]/35'
+                        : 'border-[var(--charcoal-grey)] bg-[var(--panel-muted)] hover:border-[var(--storm-cloud)]/35'
                     }`}
                     animate={{ y: isActive && activePromptPhase === 1 ? 2 : 0 }}
                     transition={{ duration: 0.2 }}
@@ -410,7 +453,7 @@ export default function Home() {
                       <div className={`flex h-8 w-8 flex-none items-center justify-center rounded-[6px] border ${
                         isActive
                           ? 'border-[var(--aether-blue)]/50 bg-[var(--aether-blue)]/15'
-                          : 'border-[var(--charcoal-grey)] bg-[#0b0c0e]'
+                          : 'border-[var(--charcoal-grey)] bg-[var(--chrome-muted)]'
                       }`}>
                         <Icon className="h-4 w-4 text-[var(--aether-blue)]" />
                       </div>
@@ -419,7 +462,7 @@ export default function Home() {
                           &quot;{example.prompt}&quot;
                         </p>
                         <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
-                          <span className="rounded-full border border-[var(--charcoal-grey)] bg-[#0b0c0e] px-2.5 py-1 text-[var(--storm-cloud)]">
+                          <span className="rounded-full border border-[var(--charcoal-grey)] bg-[var(--chrome-muted)] px-2.5 py-1 text-[var(--storm-cloud)]">
                             {example.app}
                           </span>
                           {isActive && (
@@ -439,7 +482,7 @@ export default function Home() {
 
                     {isActive && (
                       <motion.div
-                        className="mt-4 rounded-[6px] border border-[var(--aether-blue)]/35 bg-[#0b0c0e] px-3 py-2 text-[12px] text-[var(--porcelain)]"
+                        className="mt-4 rounded-[6px] border border-[var(--aether-blue)]/35 bg-[var(--chrome-muted)] px-3 py-2 text-[12px] text-[var(--porcelain)]"
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         transition={{ duration: 0.25 }}

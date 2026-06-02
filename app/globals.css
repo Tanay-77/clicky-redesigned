@@ -20,6 +20,45 @@
   --charcoal-grey: #23252a;
   --neon-lime: #533afd;
   --aether-blue: #533afd;
+  --accent-foreground: #ffffff;
+  --chrome: #121315;
+  --chrome-muted: #0b0c0e;
+  --panel: #101113;
+  --panel-muted: #111216;
+  --panel-deep: #0c0d0e;
+  --preview: #08090a;
+  --media-block: #2f3449;
+  --media-accent: #533afd;
+  --media-pill: #2a2d37;
+  --timeline-clip-a: #2d2f3b;
+  --timeline-clip-b: #252836;
+  --overlay: rgba(0, 0, 0, 0.45);
+  --shadow-strong: 0 24px 70px rgba(0, 0, 0, 0.45);
+}
+
+[data-theme='light'] {
+  --pitch-black: #f6f7fb;
+  --graphite: #ffffff;
+  --deep-slate: #eef1f6;
+  --porcelain: #151820;
+  --storm-cloud: #667085;
+  --charcoal-grey: #d9dee8;
+  --neon-lime: #533afd;
+  --aether-blue: #533afd;
+  --accent-foreground: #ffffff;
+  --chrome: #ffffff;
+  --chrome-muted: #f8f9fc;
+  --panel: #ffffff;
+  --panel-muted: #f1f4f9;
+  --panel-deep: #e8edf5;
+  --preview: #eef2f8;
+  --media-block: #cbd5e1;
+  --media-accent: #533afd;
+  --media-pill: #aeb9ca;
+  --timeline-clip-a: #dce3f0;
+  --timeline-clip-b: #cfd9e8;
+  --overlay: rgba(255, 255, 255, 0.7);
+  --shadow-strong: 0 24px 70px rgba(24, 32, 48, 0.18);
 }
 
 body {
@@ -27,3 +66,75 @@ body {
   color: var(--porcelain);
 }
 
+body,
+button,
+a,
+input,
+section,
+aside,
+div,
+span,
+p,
+h1,
+h2 {
+  transition-duration: 320ms;
+  transition-property: background-color, border-color, box-shadow, color, fill;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 650ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  mix-blend-mode: normal;
+}
+
+html.theme-transitioning::view-transition-new(root) {
+  animation-name: theme-reveal;
+  clip-path: circle(0 at var(--theme-x, 50%) var(--theme-y, 0));
+}
+
+html.theme-transitioning::view-transition-old(root) {
+  animation-name: theme-fade;
+}
+
+@keyframes theme-reveal {
+  from {
+    clip-path: circle(0 at var(--theme-x, 50%) var(--theme-y, 0));
+  }
+
+  to {
+    clip-path: circle(150vmax at var(--theme-x, 50%) var(--theme-y, 0));
+  }
+}
+
+@keyframes theme-fade {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0.98;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body,
+  button,
+  a,
+  input,
+  section,
+  aside,
+  div,
+  span,
+  p,
+  h1,
+  h2 {
+    transition-duration: 1ms;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 1ms;
+  }
+}
